@@ -8,6 +8,7 @@ channels:
 - defaults
 - peterjc123
 dependencies:
+- spacy
 - scipy
 - cuda90
 - cudnn
@@ -91,7 +92,7 @@ dependencies:
 - widgetsnbextension
 - xz
 - zeromq
-- pytorch<0.4
+- pytorch
 - bcolz
 - prompt_toolkit
 #- pytest
