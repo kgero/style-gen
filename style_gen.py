@@ -119,7 +119,7 @@ def get_pretrained_weights(itos, stoi2, pre_lm_path, vs, em_sz):
     return wgts
 
 
-def build_pretrained_lm(lm_path, trn_data, val_data, vs, em_sz):
+def build_lm(lm_path, trn_data, val_data, vs, em_sz):
     nh,nl = 1150,3
     bptt=70
     bs=52
@@ -135,7 +135,7 @@ def build_pretrained_lm(lm_path, trn_data, val_data, vs, em_sz):
         dropouti=drops[0], dropout=drops[1], wdrop=drops[2], dropoute=drops[3], dropouth=drops[4])
     return learner
 
-def main(num_epochs, valid_size, use_general, sample_general):
+def main(num_epochs, valid_size, use_general, sample_general, use_pretrained):
     # load domain text
     data_file = NAME + '.txt'
     all_texts = get_sentences(DATA_PATH/data_file)
@@ -177,9 +177,10 @@ def main(num_epochs, valid_size, use_general, sample_general):
     PRE_LM_PATH = PRE_PATH/'fwd_wt103.h5'
     em_sz = 400
     vs = len(itos)
-    wgts = get_pretrained_weights(itos, stoi2, PRE_LM_PATH, vs, em_sz)
-    learner = build_pretrained_lm(LM_PATH, trn_data, val_data, vs, em_sz)
-    learner.model.load_state_dict(wgts)      
+    learner = build_lm(LM_PATH, trn_data, val_data, vs, em_sz)
+    if use_pretrained:
+        wgts = get_pretrained_weights(itos, stoi2, PRE_LM_PATH, vs, em_sz)
+        learner.model.load_state_dict(wgts)      
 
     # Fine-tuning 
     learner.metrics = [accuracy]
@@ -219,9 +220,12 @@ if __name__ == '__main__':
     parser.add_argument('--valid_size', nargs='?', type=float, help='Validation size (0-1)', required=False, default=0.3)
     parser.add_argument('--use_general', nargs='?', help='Use general vocabulary?', const=True, required=False, default=False)
     parser.add_argument('--sample_general', nargs='?', type=int, help='Number of samples to keep from general vocabulary', required=False, default=10000)
+    parser.add_argument('--use_pretrained', nargs='?', help='Use pretrained model?', const=True, required=False, default=True)
+
 
     args = parser.parse_args()
     args.use_general = str2bool(args.use_general)
+    args.use_pretrained = str2bool(args.use_pretrained)
     print('Arguments: {}'.format(args))
    
     NAME = args.NAME
@@ -238,4 +242,4 @@ if __name__ == '__main__':
 
     ID = ''
     SAVE_NAME = '{}_lm_{}'.format(NAME, args.num_epochs)
-    main(args.num_epochs, args.valid_size, args.use_general, args.sample_general)
+    main(args.num_epochs, args.valid_size, args.use_general, args.sample_general, args.use_pretrained)
