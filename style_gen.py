@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from fastai_old.text import *
 import html
 import spacy 
@@ -119,10 +121,9 @@ def get_pretrained_weights(itos, stoi2, pre_lm_path, vs, em_sz):
     return wgts
 
 
-def build_lm(lm_path, trn_data, val_data, vs, em_sz):
+def build_lm(lm_path, trn_data, val_data, vs, em_sz, bs):
     nh,nl = 1150,3
     bptt=70
-    bs=52
     opt_fn = partial(optim.Adam, betas=(0.8, 0.99))
 
     trn_dl = LanguageModelLoader(np.concatenate(trn_data), bs, bptt)
@@ -135,14 +136,14 @@ def build_lm(lm_path, trn_data, val_data, vs, em_sz):
         dropouti=drops[0], dropout=drops[1], wdrop=drops[2], dropoute=drops[3], dropouth=drops[4])
     return learner
 
-def main(num_epochs, valid_size, use_general, sample_general, use_pretrained):
+def main(num_epochs, valid_size, use_general, sample_general, use_pretrained, batch_size):
     # load domain text
     data_file = NAME + '.txt'
     all_texts = get_sentences(DATA_PATH/data_file)
     print("Loaded domain text: {}".format(len(all_texts)))
     print("Random example: {}".format(random.choice(all_texts)))
 
-    # giannis FIXME: THIS JUST DUPLICATES OUR DATA. USE ONLY FOR DEBUGGING REASONS
+    #     giannis FIXME: THIS JUST DUPLICATES OUR DATA. USE ONLY FOR DEBUGGING REASONS
     #x = list(all_texts)
     #x.extend(x)
     #x.extend(x)
@@ -157,9 +158,12 @@ def main(num_epochs, valid_size, use_general, sample_general, use_pretrained):
     print("Text Pre-processing...")
     tok_trn = preprocess(trn_texts)
     tok_val = preprocess(val_texts)
+    
+    print("Num train tokens: {}\t valid tokens:{}".format(len(np.concatenate(tok_trn)), len(np.concatenate(tok_val))))
 
     # Loading general & domain vocabularies
-    itos_file = 'itos_' + NAME + ID + '.pkl'
+    itos_filename = 'itos_' + NAME + ID + '.pkl'
+    itos_file = LM_PATH/itos_filename
     general_vocab_path = PRE_PATH/'itos_wt103.pkl'
 
     itos, stoi = get_domain_vocab(tok_trn, min_freq=1, max_freq=60000)
@@ -177,8 +181,9 @@ def main(num_epochs, valid_size, use_general, sample_general, use_pretrained):
     PRE_LM_PATH = PRE_PATH/'fwd_wt103.h5'
     em_sz = 400
     vs = len(itos)
-    learner = build_lm(LM_PATH, trn_data, val_data, vs, em_sz)
+    learner = build_lm(LM_PATH, trn_data, val_data, vs, em_sz, batch_size)
     if use_pretrained:
+        print('using pretrained')
         wgts = get_pretrained_weights(itos, stoi2, PRE_LM_PATH, vs, em_sz)
         learner.model.load_state_dict(wgts)      
 
@@ -199,17 +204,18 @@ def main(num_epochs, valid_size, use_general, sample_general, use_pretrained):
     learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=num_epochs)
     learner.sched.plot_loss()
     lm_name = NAME + ID + '_lm_' + str(num_epochs) + 'epochs'
+    print("\nSaving model as {}...".format(lm_name))
     learner.save(lm_name)
 
-    num_epochs3 = 5
-    learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=num_epochs3)
-    learner.sched.plot_loss()
-    #lm_name = NAME + ID + '_lm_' + str(num_epochs + num_epochs2 + num_epochs3) + 'epochs'
-    lm_name = NAME + ID + '_lm_' + str(num_epochs + num_epochs3) + 'epochs'
-    learner.save(lm_name)
+#     num_epochs3 = 5
+#     learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=num_epochs3)
+#     learner.sched.plot_loss()
+#     #lm_name = NAME + ID + '_lm_' + str(num_epochs + num_epochs2 + num_epochs3) + 'epochs'
+#     lm_name = NAME + ID + '_lm_' + str(num_epochs + num_epochs3) + 'epochs'
+#     learner.save(lm_name)
 
-    print("\nSaving model as {}...".format(SAVE_NAME))
-    learner.save(SAVE_NAME)
+#     print("\nSaving model as {}...".format(SAVE_NAME))
+#     learner.save(SAVE_NAME)
     return
 
 if __name__ == '__main__':
@@ -228,18 +234,26 @@ if __name__ == '__main__':
     args.use_pretrained = str2bool(args.use_pretrained)
     print('Arguments: {}'.format(args))
    
+
     NAME = args.NAME
-    
+    # giannis: for dfw_lobster we need to manually set a batch size <= number of validation data
+    if NAME == 'dfw_lobster': 
+        batch_size = 10
+    else:
+        batch_size = 52
+
     DATA_PATH=Path('data_style/')
     DATA_PATH.mkdir(exist_ok=True)
 
     # giannis: create folder based on the date to make sure that no data will be deleted. 
-    LM_PATH = Path('data_inf/custom_lm/{}/'.format(datetime.now().strftime('%b%d_%H-%M-%S')))
+    #LM_PATH = Path('data_inf/custom_lm/{}/'.format(datetime.now().strftime('%b%d_%H-%M-%S')))
+    # katy: throwing it all in one place so i can more easily find it later
+    LM_PATH = Path('data_inf/custom_lm/')
     LM_PATH.mkdir(exist_ok=True)
     
     PRE_PATH=Path('data_inf/pretrained/')
     PRE_PATH.mkdir(exist_ok=True)
 
-    ID = ''
+    ID = '_nop'
     SAVE_NAME = '{}_lm_{}'.format(NAME, args.num_epochs)
-    main(args.num_epochs, args.valid_size, args.use_general, args.sample_general, args.use_pretrained)
+    main(args.num_epochs, args.valid_size, args.use_general, args.sample_general, args.use_pretrained, batch_size)
