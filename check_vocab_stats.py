@@ -167,12 +167,20 @@ def main(num_epochs, valid_size, use_general, sample_general, use_pretrained, ba
     general_vocab_path = PRE_PATH/'itos_wt103.pkl'
 
     itos, stoi = get_domain_vocab(tok_trn, min_freq=1, max_freq=60000)
+    with open('data_inf/custom_lm/test_vocab/domain_vocab.pkl', 'wb') as f:
+        pickle.dump(itos, f)
     itos2, stoi2 = get_general_vocab(general_vocab_path)
     if use_general:
         itos, stoi = merge_vocab(itos, itos2, sample_general=sample_general)
     with open(itos_file, 'wb') as f:
         pickle.dump(itos, f)
 
+    with open('data_inf/custom_lm/test_vocab/itos.pkl', 'wb') as f:
+        pickle.dump(itos, f)
+       
+    with open('data_inf/custom_lm/test_vocab/stoi.pkl', 'wb') as f:
+        pickle.dump(dict(stoi), f)
+        
     # Converting text to indices
     trn_data = np.array([[stoi[o] for o in p] for p in tok_trn])
     val_data = np.array([[stoi[o] for o in p] for p in tok_val])
@@ -196,17 +204,29 @@ def main(num_epochs, valid_size, use_general, sample_general, use_pretrained, ba
 
     print("Tuning the last layer for 1 epoch")
     learner.fit(lrs/2, 1, wds=wd, use_clr=(32,2), cycle_len=1)
-    learner.save(NAME + ID + '_lm_last_ft')
+    learner.save(NAME + ID + '_lm_0epochs')
 
     print("\n\nFine-tuning for {} epochs".format(num_epochs))
     learner.unfreeze()
     learner.lr_find(start_lr=lrs/10, end_lr=lrs*10, linear=True)
-    learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=num_epochs)
-    learner.sched.plot_loss()
-    lm_name = NAME + ID + '_lm_' + str(num_epochs) + 'epochs'
-    print("\nSaving model as {}...".format(lm_name))
-    learner.save(lm_name)
+    #learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=num_epochs)
+    #learner.sched.plot_loss()
+    #lm_name = NAME + ID + '_lm_' + str(num_epochs) + 'epochs'
+    #print("\nSaving model as {}...".format(lm_name))
+    #learner.save(lm_name)
 
+    cur_epochs = 0
+    num_epochs = 2
+    for i in range(100):
+        cur_epochs += num_epochs
+        learner.unfreeze()
+        #learner.lr_find(start_lr=lrs, end_lr=lrs*10, linear=True)
+        learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=num_epochs)
+        learner.sched.plot_loss()
+        lm_name = NAME + ID + '_lm_' + str(cur_epochs) + 'epochs'
+        print("\nSaving model as {}...".format(lm_name))
+        learner.save(lm_name)
+    
 #     num_epochs3 = 5
 #     learner.fit(lrs, 1, wds=wd, use_clr=(20,10), cycle_len=num_epochs3)
 #     learner.sched.plot_loss()
@@ -224,7 +244,7 @@ if __name__ == '__main__':
     parser.add_argument('--NAME', nargs='?', type=str, help='Book name', required=False, default='dfw_lobster')
     parser.add_argument('--num_epochs', nargs='?', type=int, help='Number of epochs', required=False, default=30)
     parser.add_argument('--valid_size', nargs='?', type=float, help='Validation size (0-1)', required=False, default=0.3)
-    parser.add_argument('--use_general', nargs='?', help='Use general vocabulary?', const=True, required=False, default=False)
+    parser.add_argument('--use_general', nargs='?', help='Use general vocabulary?', const=True, required=False, default=True)
     parser.add_argument('--sample_general', nargs='?', type=int, help='Number of samples to keep from general vocabulary', required=False, default=10000)
     parser.add_argument('--use_pretrained', nargs='?', help='Use pretrained model?', const=True, required=False, default=True)
 
@@ -247,13 +267,15 @@ if __name__ == '__main__':
 
     # giannis: create folder based on the date to make sure that no data will be deleted. 
     #LM_PATH = Path('data_inf/custom_lm/{}/'.format(datetime.now().strftime('%b%d_%H-%M-%S')))
+    LM_PATH = Path('data_inf/custom_lm/test_vocab/')
     # katy: throwing it all in one place so i can more easily find it later
-    LM_PATH = Path('data_inf/custom_lm/')
+    #LM_PATH = Path('data_inf/custom_lm/')
     LM_PATH.mkdir(exist_ok=True)
     
     PRE_PATH=Path('data_inf/pretrained/')
     PRE_PATH.mkdir(exist_ok=True)
 
-    ID = '_test'
+    #ID = '_nop'
+    ID = ''
     SAVE_NAME = '{}_lm_{}'.format(NAME, args.num_epochs)
     main(args.num_epochs, args.valid_size, args.use_general, args.sample_general, args.use_pretrained, batch_size)

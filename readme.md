@@ -1,12 +1,25 @@
 # Style Generation
 
-## Set-up (short)
+This repository hosts scripts for fine-tuning generic language models to produce text of certain linguistic styles. It is based on the fast.ai tutorial for fine-tuning a language model for classification tasks, which you can find [here](https://github.com/fastai/fastai/blob/master/courses/dl2/imdb.ipynb).
 
-I'm running on Python 3.6.6.
+Below are some results, in which we compare simply training a language model with the available stylistic data (raw) to using a pre-trained language model and fine-tuning with the stylistic data (pre-train).
 
-These scripts require [fast.ai](https://github.com/fastai/fastai) version 0.7. I've included in this repository the code for the old (0.7) and new (1.0) fastai. We're working with the old, but, hey, maybe we'll want the new at some point. 
+| Style  | Tokens | Condition | Example Outputs |
+|-----|----|----|----|
+|imaginative | 25k | raw | saying my head -- that which it . t not rabbit ; went near ‘ us a business ! i , and under , -- ' violently '|
+|imaginative | 25k | pre-train | ‘ do you know what you're saying ! ' said alice . caterpillar lobsters ! --   |
+|highbrow | 5k | raw | the  steak holes immersed the " to are the . it like it there thanks lobster cerebral an . |
+|highbrow | 5k | pre-train | ( there also appear to be some touristic stimuli that make the crab turn carnivore , though some do b\&bs dislike this demotic thing . ) |
+|poetry | 25k | raw | the  chair pleasure <br> length that passed bird n't . so smiling <br> he dissent a ? in . , stand |
+|poetry | 25k | pre-train |  after god , surpasses god have <br>no nearer than heaven ; <br> but heaven had not daffodils , |
 
-I did used their configuration file to set up the environment. I used `conda` to manage the packages and environment. Note that the code below is for cpu, but I've included the environment file for gpu `enviroment.yml`. 
+## Set-up
+
+This runs on Python 3.6.6.
+
+These scripts require [fast.ai](https://github.com/fastai/fastai) version 0.7. We've included in this repository the code for the old (0.7) and new (1.0) fastai. We're working with the old, but, hey, maybe we'll want the new at some point. 
+
+We did used their configuration file to set up the environment. We used `conda` to manage the packages and environment. Note that the code below is for cpu, but We've included the environment file for gpu `enviroment.yml`. We slightly modified the `.yml` files to deal with some install issues; so they are not exactly the same as on the fastai repository.
 
 ```
 conda env create -f environment-cpu.yml
@@ -17,14 +30,6 @@ Or for updating the environment:
 
 `conda env update -f environment-cpu.yml`
 
-These scripts are set up to run as Jupyter Notebooks, so open jupyter with:
+Some of these scripts are set up to run as Jupyter Notebooks, so open jupyter with:
 
 `jupyter notebook`
-
-## Set-up (commentary)
-
-I'm a little disappointed with fast.ai because it wasn't trivial to get set up working with their code. Actually, working with their code was really confusing, as they just released version 1.0 but most of their tutorials still run on 0.7. Additionally I can't seem to directly install fastai with conda or pip; I actually needed some code from their repository. 
-
-There are instructions to install fastai version 0.7 [here](http://forums.fast.ai/t/fastai-v0-7-install-issues-thread/24652) but I don't *think* you need it.
-
-Also note that their configuration files don't work out of the box; I had to modify them. What they have just patently does not work. I've had to add some packages they were missing, as well as make sure it installs pytorch 0.4 -- for some reason they are installing pytorch < 0.4, which is wild because at least some of their code requires pytorch 0.4.
