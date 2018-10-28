@@ -13,6 +13,16 @@ Below are some results, in which we compare simply training a language model wit
 |poetry | 25k | raw | the  chair pleasure <br> length that passed bird n't . so smiling <br> he dissent a ? in . , stand |
 |poetry | 25k | pre-train |  after god , surpasses god have <br>no nearer than heaven ; <br> but heaven had not daffodils , |
 
+## Fine-tuning a model with your own data
+
+To understand the process, we recommend using the `style_gen.ipynb` python notebook, which has explanations of how the pre-processing and training works. Included in this repository are some example data sets in the `data_style/` directory. 
+
+Note that you will have to download the pre-trained language model. We use the wikitext103 language created by Stephen Merity @ Salesforce research. [Here](http://files.fast.ai/models/wt103/) is a link from fast.ai, and here is a command for the terminal:
+
+`$ wget -nH -r -np -P {PATH} http://files.fast.ai/models/wt103/`
+
+Then you can use `generate_text.ipynb` to generate text with the models you trained in `style_gen.ipynb`.
+
 ## Set-up
 
 This runs on Python 3.6.6.
