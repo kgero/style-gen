@@ -2,6 +2,17 @@
 
 This repository hosts scripts for fine-tuning generic language models to produce text of certain linguistic styles. It is based on the fast.ai tutorial for fine-tuning a language model for classification tasks, which you can find [here](https://github.com/fastai/fastai/blob/master/courses/dl2/imdb.ipynb).
 
+Below are some results, in which we compare simply training a language model with the available stylistic data (raw) to using a pre-trained language model and fine-tuning with the stylistic data (pre-train).
+
+| Style  | Tokens | Condition | Example Outputs |
+|-----|----|----|----|
+|imaginative | 25k | raw | saying my head -- that which it . t not rabbit ; went near ‘ us a business ! i , and under , -- ' violently '|
+|imaginative | 25k | pre-train | ‘ do you know what you're saying ! ' said alice . caterpillar lobsters ! --   |
+|highbrow | 5k | raw | the  steak holes immersed the " to are the . it like it there thanks lobster cerebral an . |
+|highbrow | 5k | pre-train | ( there also appear to be some touristic stimuli that make the crab turn carnivore , though some do b\&bs dislike this demotic thing . ) |
+|poetry | 25k | raw | the  chair pleasure <br> length that passed bird n't . so smiling <br> he dissent a ? in . , stand |
+|poetry | 25k | pre-train |  after god , surpasses god have <br>no nearer than heaven ; <br> but heaven had not daffodils , |
+
 ## Set-up
 
 This runs on Python 3.6.6.
